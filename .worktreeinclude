@@ -1,0 +1,10 @@
+# Gitignored files to copy into each new worktree.
+# Patterns use .gitignore syntax. Only files that match AND are
+# gitignored get copied — tracked files are never duplicated.
+
+# Local environment
+.env
+.env.local
+
+# API credentials
+config/secrets.json

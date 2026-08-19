@@ -1,0 +1,28 @@
+# Claude Code worktrees (parallel sessions / --worktree / subagent isolation)
+.claude/worktrees/
+
+# Personal, per-developer Claude settings
+.claude/settings.local.json
+
+# Local environment / secrets (also copied into worktrees via .worktreeinclude)
+.env
+.env.local
+config/secrets.json
+
+# Python env and caches
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+graphify-out/
+.DS_Store
+Applications/
+CLAUDE copy.md
+
+# Local SQLite databases
+data/*.sqlite
+data/storage.sqlite
+
+# System / IDE files
+.DS_Store
+.vscode/

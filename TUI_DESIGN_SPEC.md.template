@@ -1,0 +1,347 @@
+# {{TUI_NAME}} Design Specification
+
+**Date:** {{DATE}}
+**Version:** 1.0
+**Status:** {{STATUS: Draft|In Review|Approved}}
+**Framework:** ratatui 0.29 + Rust 2021 edition
+
+---
+
+## Executive Summary
+
+Brief overview of the TUI application:
+- **Purpose:** What problem does this solve?
+- **Primary users:** Who are the target users?
+- **Key differentiators:** What makes this TUI unique?
+- **Architecture:** At-a-glance complexity (single-view | multi-tab | complex state machine)
+
+---
+
+## Feature Overview
+
+### Main Features
+1. **Feature 1** — {{Description}}
+2. **Feature 2** — {{Description}}
+3. **Feature 3** — {{Description}}
+
+### Data Sources
+- {{Source 1}}: {{Format}} (frequency: {{Update frequency}})
+- {{Source 2}}: {{Format}}
+
+---
+
+## Visual Design
+
+### Color Palette
+
+| Purpose | Color | RGB | Semantic |
+|---------|-------|-----|----------|
+| **Accent** | {{Color name}} | `RGB(r, g, b)` | Section headers, interactive elements |
+| **Success** | {{Color name}} | `RGB(r, g, b)` | Positive states, gains |
+| **Danger** | {{Color name}} | `RGB(r, g, b)` | Errors, losses |
+| **Warning** | {{Color name}} | `RGB(r, g, b)` | Warnings, pending |
+| **Background** | {{Color name}} | `RGB(r, g, b)` | Terminal background |
+| **Primary text** | {{Color name}} | `RGB(r, g, b)` | Main content |
+| **Secondary text** | {{Color name}} | `RGB(r, g, b)` | Labels, hints |
+| **Border** | {{Color name}} | `RGB(r, g, b)` | Panel borders |
+| **Highlight** | {{Color name}} | `RGB(r, g, b)` | Row selection |
+
+### Typography & Symbols
+
+| Symbol | Purpose | Usage Example |
+|--------|---------|---|
+| {{Symbol}} | {{Purpose}} | "{{Example}}" |
+| {{Symbol}} | {{Purpose}} | "{{Example}}" |
+
+**Font requirement:** {{Font family}} (e.g., Nerd Font for glyph support)
+
+### Border Styles
+
+- **Rounded:** Standard panels (most UI elements)
+- **Double-line:** Emphasized sections (critical data)
+- **Thick:** Dense data panels
+
+---
+
+## Architecture
+
+### App Structure
+
+```
+┌─────────────────────────┐
+│ Application State (App) │
+├─────────────────────────┤
+│ - screen_state: Tab     │
+│ - selection: TableState │
+│ - data: Snapshot        │
+│ - async_state: Arc<Mutex<>>
+└────────┬────────────────┘
+         │
+         ├─→ UI Rendering (render())
+         ├─→ Event Loop (handle_event())
+         └─→ Data Loading (load_data())
+```
+
+### Key Data Structures
+
+```rust
+pub struct App {
+    // UI State
+    pub current_tab: usize,
+    pub table_state: TableState,
+
+    // Business Logic State
+    pub data: {{DataStruct}},
+
+    // Async State
+    pub async_operation: Arc<Mutex<AsyncState>>,
+}
+
+pub struct {{DataStruct}} {
+    {{field1}}: {{Type}},
+    {{field2}}: {{Type}},
+}
+```
+
+### Widget Hierarchy
+
+```
+Window (Frame)
+├── Header / Tab bar
+├── Body
+│   ├── (Tab 1)
+│   │   ├── Panel (Block)
+│   │   │   └── Table / Chart / Paragraph
+│   │   └── Panel (Block)
+│   │       └── Detail view
+│   ├── (Tab 2)
+│   │   └── ...
+│   └── ...
+└── Status bar / Footer
+```
+
+---
+
+## UI Specification
+
+### Tab Layout
+
+**Tab {{N}}: {{Tab Name}}**
+- **Purpose:** {{Purpose}}
+- **Layout:** {{Layout pattern (grid, split, stacked)}}
+- **Widgets:** {{List of widgets}}
+- **Data source:** {{Where data comes from}}
+- **Interactions:** {{Key actions}}
+
+**Example:**
+```
+Tab 0: Overview
+- Purpose: Dashboard summary
+- Layout: 2×2 grid + sidebar
+- Widgets: Table (top signals), Table (movers), Paragraph (status)
+- Data: Snapshot{signals, movers, metrics}
+- Interactions: Arrow keys navigate, Enter to drill down
+```
+
+---
+
+## Data Flow
+
+### Primary Refresh Cycle
+
+```
+┌─────────────────────────┐
+│ {{Data Source}}         │
+└────────┬────────────────┘
+         │
+         ├─→ {{Load frequency}} Load
+         │
+         ▼
+┌─────────────────────────┐
+│ App::data (Snapshot)    │
+└────────┬────────────────┘
+         │
+         ├─→ Filter (search)
+         ├─→ Sort (column)
+         ├─→ Paginate (if needed)
+         │
+         ▼
+┌─────────────────────────┐
+│ Render (current_tab)    │
+│ - Widget::render()      │
+│ - StatefulWidget::render()
+└─────────────────────────┘
+```
+
+### Async Operations
+
+Operations that run in background threads:
+
+| Operation | Trigger | State | Timeout |
+|-----------|---------|-------|---------|
+| {{Operation}} | {{When triggered}} | `Arc<Mutex<{{State}}>>` | {{Duration}} |
+
+**Example:**
+```
+Chart fetch: when user presses 'c' on Signals tab
+  → spawn thread → fetch_intraday.py → write ChartState::Ready/Error
+  → main loop detects state change → re-render
+```
+
+---
+
+## User Interactions
+
+### Keyboard Map
+
+| Key | Mode | Action | Affected State |
+|-----|------|--------|---|
+| `←/→` | Always | Switch tabs | `current_tab` |
+| `↑/↓` | Table | Scroll selection | `table_state.selected()` |
+| `/` | {{Tab names}} | Filter | `search_query` |
+| `Enter` | {{Tab names}} | {{Action}} | {{State}} |
+
+### Modal Dialogs
+
+**Dialog 1: {{Dialog name}}**
+- **Trigger:** {{When shown}}
+- **Buttons:** {{Buttons available}}
+- **Actions:** {{What each button does}}
+
+---
+
+## Performance Considerations
+
+### Refresh Rate
+- **Primary loop:** {{Frequency}} (e.g., 60 FPS or 2s SQLite scan)
+- **Data reload:** {{Frequency}} (e.g., 2s for SQLite)
+- **Async operations:** {{Expected duration}} (e.g., 5-10s for API calls)
+
+### Memory Usage
+- **Estimated Snapshot size:** {{Size}} (e.g., 500KB for 1000 rows)
+- **Thread overhead:** {{Estimate}} (Arc<Mutex<>> per async operation)
+- **String allocations:** {{Strategy}} (reuse vs. rebuild each frame)
+
+### Optimization Strategies
+- {{Strategy 1}}: {{Description}}
+- {{Strategy 2}}: {{Description}}
+
+---
+
+## Error Handling
+
+### Graceful Degradation
+- **Missing data:** {{How to handle}} (show empty state, use placeholder)
+- **Async timeout:** {{How to handle}} (show error, allow retry)
+- **Schema drift:** {{How to handle}} (degrade tab, show warning)
+
+### Error Display
+```
+┌─────────────────────────┐
+│ Error panel (red text)  │
+│ "Connection timeout"    │
+│ [Retry]                 │
+└─────────────────────────┘
+```
+
+---
+
+## Testing Strategy
+
+### Manual Testing Checklist
+- [ ] All tabs render without panic
+- [ ] Tab switching smooth (no flicker)
+- [ ] Search filter works (case-insensitive, partial match)
+- [ ] Async operations show loading state
+- [ ] Error messages clear and actionable
+- [ ] No memory leaks on long-running (10+ min)
+
+### Automation
+- **Unit tests:** {{What's tested}} (data models, sorting logic)
+- **Integration tests:** {{What's tested}} (data loading, async state)
+- **Snapshot tests:** {{What's captured}} (UI layout on different sizes)
+
+---
+
+## Accessibility
+
+### Keyboard Navigation
+- ✓ All actions accessible via keyboard
+- ✓ Tab order logical and visible
+- ✓ Help available (`?` key)
+
+### Color Contrast
+- ✓ WCAG AA compliant (4.5:1 for body text)
+- ✓ No reliance on color alone (use symbols/text)
+
+### Terminal Compatibility
+- ✓ 256-color terminals
+- ✓ Monochrome fallback (if no colors available)
+- ✓ Nerd Font glyphs gracefully degrade to ASCII
+
+---
+
+## Known Limitations
+
+- {{Limitation 1}}: {{Why}} (workaround: {{if any}})
+- {{Limitation 2}}: {{Why}}
+
+---
+
+## Future Enhancements
+
+### Phase 2
+- {{Feature A}}: {{Description}}
+- {{Feature B}}: {{Description}}
+
+### Phase 3
+- {{Feature C}}: {{Description}}
+
+---
+
+## References
+
+- **ratatui 0.29 docs:** https://ratatui.rs/
+- **Widget examples:** https://ratatui.rs/examples/widgets/
+- **App patterns:** https://ratatui.rs/examples/apps/
+- **Internal:** {{Links to related docs, ADRs, architecture diagrams}}
+
+---
+
+## Appendix: Widget Reference
+
+### Chosen Widgets
+
+| Widget | Why chosen | Alternative | Trade-off |
+|--------|-----------|-------------|-----------|
+| Table | Structured data, selection support | List | Can't embed sparklines |
+| Chart | Time-series visualization | BarChart | Smooth curves vs bar data |
+| Gauge | Progress/percentage metrics | Sparkline | Dedicated vs inline |
+| Block | Border + title | Manual borders | Full-featured container |
+
+### Pattern: {{Pattern Name}}
+
+**Use when:** {{Condition}}
+
+```rust
+// Code example
+{{Code snippet}}
+```
+
+---
+
+## Notes & Decisions
+
+### Decision: {{What was decided}}
+**Date:** {{When}}
+**Rationale:** {{Why this choice over alternatives}}
+**Trade-off:** {{What was sacrificed}}
+
+Example:
+```
+Decision: Light mode palette (vs dark mode)
+Date: 2026-06-30
+Rationale: Professional appearance, high contrast, modern aesthetic
+Trade-off: Eye strain in dark environments (mitigated by WCAG compliance)
+```
+

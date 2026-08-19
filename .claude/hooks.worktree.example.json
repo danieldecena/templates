@@ -1,0 +1,25 @@
+{
+  "__comment": "NON-GIT VCS ONLY. Merge the `hooks` block below into .claude/settings.json if your project uses SVN, Perforce, Mercurial, etc. instead of git. These hooks REPLACE git worktree behavior, so .worktreeinclude is NOT processed — copy local config files inside the create script instead. Delete this file if you use git.",
+  "hooks": {
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'NAME=$(jq -r .name); DIR=\"$HOME/.claude/worktrees/$NAME\"; svn checkout https://svn.example.com/repo/trunk \"$DIR\" >&2 && echo \"$DIR\"'"
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'DIR=$(jq -r .path); rm -rf \"$DIR\"'"
+          }
+        ]
+      }
+    ]
+  }
+}
